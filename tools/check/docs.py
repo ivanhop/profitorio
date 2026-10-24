@@ -91,6 +91,7 @@ BUDGETS = {
     ".claude/skills/verify-in-engine/SKILL.md": 1600,
     ".claude/skills/add-customer-order/SKILL.md": 1200,
     ".claude/skills/tune-economy/SKILL.md": 1200,
+    ".claude/skills/claude/SKILL.md": 800,
 }
 
 # Backticked strings that look like paths but are not ours to have on disk.
