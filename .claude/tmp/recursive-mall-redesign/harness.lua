@@ -17,6 +17,7 @@ function H.cells()
 end
 function H.net() return H.at(H.TRIGGER, "requester-chest").logistic_network end
 function H.rig_off() H.at(H.RIG_CHEST, "requester-chest").get_control_behavior().set_requests = false end
+function H.freeze() game.tick_paused = true return "paused at " .. game.tick end
 function H.demand(item, n)
   local sec = H.at(H.TRIGGER, "requester-chest").get_requester_point().get_section(1)
   if not item or n == 0 then sec.clear_slot(1) else sec.set_slot(1, {value = {name = item, quality = "normal"}, min = n}) end
@@ -66,6 +67,7 @@ function H.run(ticks, tag)
     if now + 1 >= ticks then script.on_nth_tick(1, nil) H.done = true end
   end)
   H.done = false
+  game.tick_paused = false
   return "running " .. ticks .. " ticks from " .. game.tick
 end
 function H.report()
@@ -83,7 +85,7 @@ function H.report()
   local rec = {}
   for r, v in pairs(st.recipe) do rec[#rec + 1] = string.format("  %-28s cells=%.2f crafts=%d", r, v.ticks / st.ticks, v.crafts) end
   table.sort(rec)
-  helpers.write_file(st.tag .. "_changes.txt", table.concat(st.log, "\n"))
+  helpers.write_file(st.tag .. "_changes.txt", table.concat(st.log, "\n"), false, 0)
   return head .. "\n" .. table.concat(lines, "\n") .. "\nper recipe (avg cells assigned):\n" .. table.concat(rec, "\n") .. "\n(change log: script-output/" .. st.tag .. "_changes.txt)"
 end
 function H.export(file, area)
@@ -91,9 +93,10 @@ function H.export(file, area)
   inv.insert("blueprint")
   local bp = inv[1]
   bp.create_blueprint{surface = H.s, force = "player", area = area or {{-245, 102}, {-214, 138}}}
-  helpers.write_file(file .. ".txt", bp.export_stack())
-  helpers.write_file(file .. ".json", helpers.table_to_json(bp.get_blueprint_entities()))
+  helpers.write_file(file .. ".txt", bp.export_stack(), false, 0)
+  helpers.write_file(file .. ".json", helpers.table_to_json(bp.get_blueprint_entities()), false, 0)
   inv.destroy()
   return "exported " .. file
 end
-rcon.print("harness loaded, " .. #H.cells() .. " cells")
+game.tick_paused = true
+rcon.print("harness loaded and game paused at tick " .. game.tick .. ", " .. #H.cells() .. " cells; H.run unpauses")

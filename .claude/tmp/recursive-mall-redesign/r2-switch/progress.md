@@ -1,0 +1,2 @@
+- 20:35 done. Switch = finish craft (<=30 t) + dump at 12 t/item (fast) + robot leg 270-320 t (33-tile distance, dispatch instant) + about 25 t. Total about 440-520 t; research-server dump alone 500 t.
+- Bulk output inserter: dump 5 t/item. Prefetch at switch: first craft 310 t. Ingredient already in the chests: 142 t. Recommend a hold of 1800 t or more. Notes in notes.md.
