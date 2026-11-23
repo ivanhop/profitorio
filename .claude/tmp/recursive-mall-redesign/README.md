@@ -1,5 +1,7 @@
 # Recursive mall redesign: working folder
 
+**Start at `PROGRESS.md`**: the handoff, decisions and next steps. This file holds the tools and the full round results.
+
 Unrelated to Profitorio. Background, engine facts and the first design: `research.md`.
 
 ## Goal (what any design must meet)
@@ -119,3 +121,67 @@ hoard 4627 items.
     2. bulk output inserters (12 → 5 t/item);
     3. prefer a recipe whose ingredients the cell's chests already hold (about 140).
   - Hold each assignment at least 1800 ticks.
+
+## Session 2, round 3: results (details in `round3.md` and `r3-*/notes.md`)
+
+Comparable numbers: all with the paused harness and the 367 mask, each on a fresh copy.
+
+| | S1 working / changes | 3600 t working / changes | Servers in 3600 t (first at) | Idle after demand cleared? | Combinators |
+|---|---|---|---|---|---|
+| Baseline 0.2.7 | 10% / 68 | 10% / 135 | 1 (79, from preloaded ingredients) | — | 199 |
+| r2-b (reference) | 11% / 57 | 70% / 108 | 8 (1529) | **No** | 155 |
+| design C + mask (reference) | 35% / 27 | 68% / 42 | 6 (1240) | **No** | 92 |
+| r3-grace (on) | 23% / 24 | 42% / 142 | 5 (784) | not run | 195 |
+| r3-second (on) | 13% / 61 | not measured | — | not run | 177 |
+
+- **Biggest finding: no design ends a batch idle.** After the trigger is cleared, all cells pick
+  recipes up again. Server stock bounces (12 → 1 → 10), and C's AC stock climbs from 54 to 126.
+  - Main suspect, untested: the cells' own circuit-set requester chests sit on network 18, so they
+    appear in the head's missing-requests count. That is the bug #2 mechanism: the mall feeds itself.
+  - **Fix this before tuning anything else**: it violates the goal outright.
+- **Advanced circuits limit both designs.** r2-b made 0 AC in 3600 t, even with 0.8 cells on it;
+  C made 37.
+- **Grace (900 cap) helps the start and hurts the long run.**
+  - Stranded cells sit out 900 + 120 ticks on items whose inputs never come, then walk down together.
+  - Each hop restarts the grace.
+  - It also found that r2-b lets a shared cell jump to an unstaffed item with no budget check.
+  - Next to try: a cap of 300–450, or ending grace once the cell is starved.
+- **Second cell:** built (DIFF bus = 1001 × working − 1000 × cells, so it is > 0 only when every cell
+  on the item works), but not measured. Warning sign: in S1, AC held about 3 cells, all starving.
+- **Tooling failures this round (both agents lost their on/off comparison):**
+  - Never pipe `instance.ps1` into `tail`/`head`. The server inherits the pipe and the reader waits
+    forever. Call it bare.
+  - `instance.ps1 -Stop` now waits for the process to exit. Before that, a quick restart could reach
+    the old server: one "fresh" copy already had `H` defined.
+  - For an on/off pair, start two servers in parallel (two slots) rather than one after the other.
+  - Runs shorter than 600 ticks vary 9–42% between copies. Judge features on 3600-tick pairs.
+
+## Session 2, after round 3: the "never idle" diagnosis (r2-b, measured)
+
+**Not a bug: the batch was simply longer than the test.** My self-feeding suspicion was wrong.
+
+- **No demand from the start:** all 20 cells stay without a recipe for 1800 ticks. Nothing leaks
+  onto the list.
+- **After a 2400-tick 50-server batch, demand cleared:**
+  - The list held server (D+B = 9, stock 3 < B = 12), AC (missing 8 from the server cell's chests,
+    stock 0 < B = 50) and components (stock 0 < 50).
+  - The hysteresis is refilling every intermediate's buffer, as designed. The trigger chest keeps
+    the 50 servers it received, so the network stock really is 3.
+- **It goes fully idle about 3600 ticks after demand is cleared:** 20/20 no recipe, hoard 0, stock
+  server 13 / AC 69 / components 707.
+- **Why it takes so long:** a server needs 50 + 5×2 = 60 components, and ~17 component cells make
+  ~90 per 1200 ticks, so a 50-server batch is about 3000 components. Rounds 1–3's "not idle at
+  3600" verdicts all ran out of time.
+  - **Use a small batch for batch-and-idle tests**, e.g. 5 servers or 20 power switches.
+- **The real defect found: AC ↔ cable oscillation while winding down.** 181 changes in 2400 ticks,
+  41 of them within 60 ticks of the same cell's previous change.
+  - Top transitions: `- → AC` 42, `cable → -` 41, `AC → cable` 40.
+  - The cycle:
+    1. AC cells starve on cable and walk down to cable.
+    2. Many cable cells fill cable's small buffer (stack ÷ 4 = 50 = 12 AC crafts) in moments.
+    3. Cable leaves the list and frees them all at once.
+    4. They re-pick AC and drain the cable, and the cycle repeats. Every hop costs a dump.
+  - Candidate fixes:
+    - a larger buffer for cheap fast intermediates (stack ÷ 4 penalises 200-stacks consumed 4 at a time);
+    - freed cells spreading out instead of all re-picking the top item;
+    - a short hold after an item-left-list release.

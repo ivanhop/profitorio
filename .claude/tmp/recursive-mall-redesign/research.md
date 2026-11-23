@@ -4,6 +4,7 @@ This is unrelated to Profitorio. It is a circuit-controlled mall in the user's S
 playthrough. Everything below was measured on copies of the save in an isolated headless server; the
 real save was never touched.
 
+> **Start at `PROGRESS.md`** (handoff, decisions, next round).
 > **Session 2 (2026-11-23):** tooling (`instance.ps1`, `harness.lua`), the goal, the standard
 > scenario and the baseline score are in `README.md`. Three rival designs were built in parallel;
 > each has its own `design-a|b|c/notes.md`. Read the README first.

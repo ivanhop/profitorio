@@ -12,6 +12,9 @@ $ErrorActionPreference = 'Stop'
 if ($Stop) {
   $id = Get-Content "$Dir\pid.txt"
   Stop-Process -Id $id -ErrorAction SilentlyContinue
+  # Wait for the exit: a restart straight after Stop-Process can otherwise race the old server for
+  # the ports, and RCON may still reach the old process (round 3 saw a "fresh" copy with H defined).
+  Wait-Process -Id $id -Timeout 30 -ErrorAction SilentlyContinue
   return
 }
 $exe = "C:\Program Files (x86)\Steam\steamapps\common\Factorio\bin\x64\factorio.exe"

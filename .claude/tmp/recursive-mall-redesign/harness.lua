@@ -7,6 +7,7 @@ H = {}
 H.s = game.surfaces.nauvis
 H.TRIGGER = {-207.5, 122.5}
 H.RIG_CHEST = {-222.5, 148.5}
+H.TARGET = "kr-research-server"
 H.MALL_AREA = {{-245, 102}, {-214, 138}}
 function H.at(pos, name) return H.s.find_entities_filtered{position = pos, radius = 0.6, name = name}[1] end
 function H.cells()
@@ -31,9 +32,10 @@ end
 function H.rname(e) local r = e.get_recipe() return r and r.name or "-" end
 ---
 /silent-command
-function H.run(ticks, tag)
+function H.run(ticks, tag, target, n)
   local cells = H.cells()
-  local st = {tag = tag or "run", t0 = game.tick, ticks = ticks, cell = {}, recipe = {}, log = {}}
+  local st = {tag = tag or "run", t0 = game.tick, ticks = ticks, cell = {}, recipe = {}, log = {},
+    target = target or H.TARGET, n = n or 10, made = 0, t_first = nil, t_n = nil}
   for i, e in pairs(cells) do
     st.cell[i] = {r = H.rname(e), pf = e.products_finished, changes = 0, work = 0, starved = 0, none = 0, crafts = 0}
   end
@@ -54,6 +56,11 @@ function H.run(ticks, tag)
         rr.crafts = rr.crafts + (pf - c.pf)
         st.recipe[r] = rr
         c.crafts = c.crafts + (pf - c.pf)
+        if r == st.target then
+          st.made = st.made + (pf - c.pf)
+          if not st.t_first then st.t_first = now end
+          if not st.t_n and st.made >= st.n then st.t_n = now end
+        end
       end
       c.pf = pf
       if r == "-" then c.none = c.none + 1
@@ -82,6 +89,9 @@ function H.report()
   local T = st.ticks * 20
   local head = string.format("[%s] %d ticks: working %.0f%%  recipe-but-not-working %.0f%%  no-recipe %.0f%%  recipe changes %d  chest hoard %d items",
     st.tag, st.ticks, 100 * W / T, 100 * S / T, 100 * N / T, CH, H.hoard())
+  head = head .. string.format("
+first %d %s: %s (first one at %s, %d made in run)", st.n, st.target,
+    st.t_n and (st.t_n .. " ticks") or "NOT reached", st.t_first and (st.t_first .. " ticks") or "never", st.made)
   local rec = {}
   for r, v in pairs(st.recipe) do rec[#rec + 1] = string.format("  %-28s cells=%.2f crafts=%d", r, v.ticks / st.ticks, v.crafts) end
   table.sort(rec)
