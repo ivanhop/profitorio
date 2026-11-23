@@ -1,6 +1,6 @@
 ---
-name: claude
-description: Use when the user invokes /claude, or hands over a Profitorio change that spans several files, has open questions, or needs research before anyone can say what "done" means.
+name: deliver
+description: Use when the user invokes /deliver, or hands over a Profitorio change that spans several files, has open questions, or needs research before anyone can say what "done" means.
 ---
 
 # Clarify, research, scope, plan, do, validate
