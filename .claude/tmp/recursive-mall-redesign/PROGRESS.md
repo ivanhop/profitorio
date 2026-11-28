@@ -1,6 +1,6 @@
 # Recursive mall redesign: progress and handoff (start here)
 
-Last session: 2026-11-23 (session 2). Unrelated to Profitorio: this is the circuit-controlled mall in
+Last session: 2026-11-28 (session 3). Unrelated to Profitorio: this is the circuit-controlled mall in
 the user's Space Age + Krastorio2 save `colin0.2.7`. The real save is never touched; everything runs
 on isolated headless copies.
 
@@ -91,18 +91,42 @@ ticks, 41 of them within 60 ticks.
     - a stockout edge (D > 0 now and not last tick) × step, added to B.
     - Raw D needs its own wire, separate from the latch feedback.
 
-## Next: round 4 (agreed in outline, not started)
+## Session 3 (2026-11-28): sandbox save, rounds 4–6
 
-Two agents on `r2-b`, each running an on/off pair on **two servers in parallel**:
-1. **The adaptive buffer**, as above.
-2. **A short hold after release:** a cell freed because its item left the list cannot be re-picked
-   immediately.
+**Tooling:**
+- `harness.lua` sets `game.speed = 1000` on load and re-pauses when `H.run` ends. It used to keep
+  running past the window.
+- `mall-sandbox.zip` is the mall trimmed out of colin0.2.7: same coordinates, infinite power,
+  over-provisioned finite stock. It runs at ~1100 UPS against ~870 for the full save, because most
+  of each tick is mod Lua. It scores in the same range. See README §Sandbox save; rebuild it with
+  `sandbox-build.lua`.
+- All numbers below are on the sandbox, on/off pairs run in parallel on fresh copies.
+- r2-b's off runs vary 79–86% working and 52–60 changes between copies.
 
-Each measures:
-- the oscillation: changes, and changes within 60 ticks of the same cell's previous change;
-- a **5-server batch through to idle**;
-- the 3600-tick run, with time to the first 10 servers (`H.run(3600,"t10")`);
-- for 1 only: where B settles for cable, AC and components, and whether it stops growing.
+| Round | Feature | 50 servers / 3600 t (on vs off) | 5-server batch to idle (on vs off) | Verdict |
+|---|---|---|---|---|
+| 4 | Hold 450 t after release (`r4-hold/`, +40 comb.) | 80% vs 86%, 61 vs 52 changes | 10800 vs 8400 t | **Rejected** |
+| 4 | Adaptive B, edge on D > 0 (`r4-adaptive/`) | 75% vs 79% | never idle; B(server) = 36 | Runaway |
+| 5 | Adaptive B, edge on stock ≤ 0 ∧ D > 0 (`r5-adaptive/`) | 82% vs 81% | never idle; AC still growing | Runaway: re-fires per item passing through |
+| 6 | **Adaptive B + re-arm latch** (`r6-adaptive/`, 162 comb.) | 77% vs 80%, 82 vs 60 changes, 9 vs 8 servers, first at 1046 vs 1381 | 8400 vs 8400 t, 16 vs 23 fast changes, hoard 0 | **Meets the spec**; small gain |
+
+- **r6:** after B grows, the stockout trigger stays disarmed until stock is back above B/2. That
+  gives one step per drain-and-refill. B settles at server 12, AC 50, components 100, cable 150,
+  and stops growing.
+- **The cable ↔ AC oscillation is weak on the sandbox:** about 16–23 fast changes per batch. So
+  neither feature has much to fix here. On the full save the base also tops up stock while a run
+  goes on.
+
+## Next (user to decide)
+
+- **Adopt r6 as the new base, or keep r2-b?** r6 is the user's design, working as specified. Its
+  gain is within copy-to-copy noise, except a sooner first server.
+- **Knobs that would change the user's design:**
+  - a bigger growth step than a quarter stack;
+  - growing intermediates only;
+  - slow decay.
+- **Tests:** run r6 on the full save, where the oscillation was first seen, and with longer runs or
+  repeats to get past the noise.
 
 **Format the user wants:** 15-minute agents, a progress request every 5 minutes, and agents reply
 via SendMessage.

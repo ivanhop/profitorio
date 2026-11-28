@@ -71,7 +71,7 @@ function H.run(ticks, tag, target, n)
         if e.status == defines.entity_status.working then c.work = c.work + 1 else c.starved = c.starved + 1 end
       end
     end
-    if now + 1 >= ticks then script.on_nth_tick(1, nil) H.done = true end
+    if now + 1 >= ticks then script.on_nth_tick(1, nil) game.tick_paused = true H.done = true end
   end)
   H.done = false
   game.tick_paused = false
@@ -109,4 +109,6 @@ function H.export(file, area)
   return "exported " .. file
 end
 game.tick_paused = true
+-- CPU-bound: ~1100 UPS on the full colin0.2.7 save; ticks are identical at any speed.
+game.speed = 1000
 rcon.print("harness loaded and game paused at tick " .. game.tick .. ", " .. #H.cells() .. " cells; H.run unpauses")

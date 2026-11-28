@@ -208,7 +208,8 @@ local q0 = {{hd.c1, W.combinator_output_red}, {hd.c2, W.combinator_output_red}, 
 local help = {{hd.help, W.combinator_input_red}}
 local y = {{hd.y1, W.combinator_output_green}, {hd.y2, W.combinator_output_green}}
 -- Relay pole: hd.an to the nearest cell latch is 9.92 tiles, over the 9.75 a blueprint paste keeps.
-MB.relay = MB.at({-220.5, 103.5}, "medium-electric-pole") or MB.make("medium-electric-pole", {-220.5, 103.5})
+-- The relay sits at (-221.5,103.5): at (-220.5,103.5) it overlaps the contents roboport (-219,105), which a script can place but a blueprint paste cannot.
+MB.relay = MB.at({-221.5, 103.5}, "medium-electric-pole") or MB.make("medium-electric-pole", {-221.5, 103.5})
 local o = {{hd.an, W.combinator_input_green}, {MB.relay, W.circuit_green}}
 for k = 1, MB.NCELLS do
   local c = MB.cell[k]

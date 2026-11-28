@@ -185,3 +185,39 @@ Comparable numbers: all with the paused harness and the 367 mask, each on a fres
     - a larger buffer for cheap fast intermediates (stack ÷ 4 penalises 200-stacks consumed 4 at a time);
     - freed cells spreading out instead of all re-picking the top item;
     - a short hold after an item-left-list release.
+
+## Sandbox save (`mall-sandbox.zip`)
+
+A copy of colin0.2.7 trimmed to the mall, for faster and cleaner tests. Same coordinates, so
+`harness.lua` works unchanged.
+
+- **Start it:** `instance.ps1 -Dir <new dir> -Slot N -Save <repo>\.claude\tmp\recursive-mall-redesign\mall-sandbox.zip`,
+  then load `harness.lua` as usual (20 cells, `H.rig_off()`, `H.demand()` all work).
+- **Rebuild it** (e.g. from a newer save): start a fresh instance of that save, then pipe
+  `sandbox-build.lua` into the probe client (not the harness). It records network 18, trims, powers,
+  stocks, verifies and saves `<dir>/saves/mall-sandbox.zip` after 301 ticks; the checks land in
+  `script-output/sandbox_report.txt`. Check `SB.KEEP` and `SB.EXTRA` at its top first.
+- **Kept:** everything in x −249..−205, y 100..153 except belts and a stray chest: 20 cells + the rig
+  (23 AM2), 201 combinators, 110 fast inserters, 83 requester + 21 active provider chests, 22
+  roboports, 70 poles, the 11 ghosts and the trigger. Network 18: 628 logistic / 636 construction
+  robots and 22 roboports (full save: 795 / 787 and 132 roboports spread over the base).
+- **Deleted:** every other chunk on nauvis (7028), the speed-module block and belts east of the mall,
+  and platform-1. New chunks generate as lab tiles; peaceful, no expansion, no evolution, no pollution.
+- **Power:** one `electric-energy-interface` at (−208,114) on the mall's single pole network
+  (10 TJ/tick output). No entity reports low or no power and every roboport is full.
+- **Stock** (finite): items the mall **makes** (the save's 183-item mask) keep today's count, because
+  their stock is on the list. 10× copper cable kept cable off the list entirely: 0 changes instead of
+  ~130. Every other ingredient of a mask recipe gets 10× today's network count. The server tree's raw
+  inputs get at least 10 × 50-server batches, so `kr-steel-beam` (−7 today) gets 2000. Totals are
+  139 k → 1.13 M items, e.g. iron 40 k → 403 k, copper 11 k → 114 k, glass/silicon 10 k → 99 k/96 k,
+  plastic 1.2 k → 13.7 k. They sit in the original warehouse plus 11 more east of it (x −202, −196,
+  −190). The original warehouse holds 80 stacks of each raw server input, so those pickups stay 33 tiles.
+- **Speed** (3600 ticks, `H.run` at speed 1000): sandbox 1110 UPS, full save 840–900.
+  `--benchmark` shows why the gain is small: 0.76 ms/tick for the sandbox vs 0.84 for the full save, of
+  which mod scripts (`scriptUpdate` 0.32 ms) and Lua GC (0.24 ms) are three quarters. The game update
+  itself drops from 0.31 to 0.19 ms. More speed would need fewer script mods, which changes the save.
+- **Fidelity** (0.2.7 as found, rig off, 50 servers, 3600 ticks, fresh copies): working 10–11% vs
+  10%, 0–1 servers vs 0–1, recipe changes 192–271 vs 129–136. All the extra changes are C4's cable
+  flip and its ripple (bug #2/#4). The sandbox starts with no cable in stock, the full copies with
+  about 42, so the flip starts earlier. In the full save base production also tops up some inputs,
+  such as plastic.
