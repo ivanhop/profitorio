@@ -16,6 +16,8 @@ Unrelated to Profitorio. Background, engine facts and the first design: `researc
 
 ## Tools
 
+- **`bench/`: the benchmark.** 50 beacons scored against the computed optimum in time and
+  energy, per cell, with a timeline of what each cell crafted. Start at `bench/README.md`.
 - `instance.ps1 -Dir <new dir> -Slot N` copies colin0.2.7 and starts an isolated headless 2.1.24
   server with RCON on `127.0.0.1:2712N` (password `probe`), game port `3429N`. `-Stop` stops it.
   Use a different slot per concurrent server.

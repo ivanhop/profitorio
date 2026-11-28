@@ -117,6 +117,46 @@ ticks, 41 of them within 60 ticks.
   neither feature has much to fix here. On the full save the base also tops up stock while a run
   goes on.
 
+## Benchmark: 50 beacons (`bench/`, session 3)
+
+Runs, report and how to read them: `bench/README.md`, `bench/results/` (open `report.html`).
+Sandbox, fresh copy per design, ghosts removed, 54000-tick (15 min) cap, **one run each**.
+Perfect = 12 500 t (208 s) for every design.
+
+| Design | 50 delivered at (% of perfect) | All idle at | Useful / switching / surplus / none | Recipe changes (reached a craft) | Total MJ | MJ per beacon | Robot items × ideal |
+|---|---|---|---|---|---|---|---|
+| **r3-grace** | **22 137 (57%)** | 25 591 | 49 / 16 / 20 / 11% | 350 (111) | 6 246 | 110 | 1.7 |
+| design-a | 26 382 (48%) | 27 818 | 45 / 27 / 8 / 18% | 926 (131) | 6 021 | 112 | 2.0 |
+| design-c | 39 917 (31%) | — | 23 / 8 / 17 / 48% | 396 (157) | 8 216 | 123 | 2.1 |
+| r3-second | 47 144 (27%) | 52 578 | 24 / 35 / 14 / 26% | 3 777 (335) | 20 312 | 363 | 4.6 |
+| r4-adaptive | 47 370 (27%) | — | 23 / 32 / 30 / 12% | 2 649 (605) | 20 178 | 348 | 3.6 |
+| r4-hold | 49 047 (26%) | — | 23 / 36 / 18 / 21% | 2 827 (754) | 20 881 | 360 | 4.1 |
+| r2-hybrid | 50 065 (25%) | — | 23 / 16 / 4 / 55% | 504 (140) | 6 915 | 126 | 1.5 |
+| r6-adaptive | 30 of 50 | — | 22 / 41 / 15 / 22% | 3 587 (714) | 20 690 | 690 | 4.1 |
+| design-b | 28 of 50 | — | 21 / 45 / 2 / 31% | 4 956 (613) | 22 285 | 796 | 4.9 |
+| r2-b | 27 of 50 | — | 21 / 44 / 3 / 30% | 4 775 (629) | 22 116 | 819 | 4.9 |
+| baseline 0.2.7 | 26 of 50 | — | 15 / 1 / 0 / 81% | 3 496 (68) | 6 156 | 237 | 0.9 |
+| r5-adaptive | 25 of 50 | — | 21 / 41 / 16 / 20% | 3 288 (734) | 21 184 | 847 | 3.9 |
+
+- **Two families.** Designs that hold a recipe (r3-grace, A, C, hybrid: 350–930 changes) use
+  6–8 GJ and 110–126 MJ per beacon. The r2-b family without grace (2 600–5 000 changes) uses
+  20–22 GJ, 3–8× more per beacon, and 4 of its 7 don't finish in 15 minutes.
+- **r3-grace is best on every axis**: first to 50, first idle, least energy. Round 3 rejected it on
+  the 3600-tick server test; the longer batch reverses that verdict.
+- **Robots are 72–92% of all energy.** Churn is what costs: each abandoned switch dumps the cell
+  and the robots carry it twice. The baseline uses little energy only because 81% of its cells sit
+  without a recipe.
+- **Caveats:** one run per design, and copies vary (r6 made 45 in an earlier run with ghosts, 30
+  here). Repeat the top designs before deciding. Design A ran from `results/design-a-ascii.lua`:
+  its `≥`/`≠` comparators are rejected by 2.1.24, so they were swapped for `>=`/`!=`.
+- **Blueprints:** use `r3-grace/blueprint-v2.txt`. It was tested by pasting it into a fresh copy
+  and benchmarking it: delivered at 24 117 t, 52% of perfect.
+  - **Every older r2-b-based `blueprint.txt` is broken.** r2-b's O-bus relay pole at
+    (−220.5, 103.5) sits inside a roboport, and r3-grace's export also cut off the head row at
+    y = 100.5. Details: `r3-grace/notes.md`.
+- `results/with-ghosts/`: the first r6 and r2-b runs, skewed because robots built the save's 11
+  beacon ghosts from the batch. Kept as evidence only.
+
 ## Next (user to decide)
 
 - **Adopt r6 as the new base, or keep r2-b?** r6 is the user's design, working as specified. Its

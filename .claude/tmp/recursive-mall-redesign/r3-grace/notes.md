@@ -48,3 +48,33 @@ the grace-on mall block, exported from the fresh copy after the 3600-tick run.
 - Next: cap the grace on starvation, e.g. GRACE 300 to 450 (about the first-delivery time), or end
   grace when ingredients are present but the cell is not working. Then rerun on and off on the same
   harness.
+
+## Blueprint v2 (2026-11-28): use `blueprint-v2.txt`, not `blueprint.txt`
+
+`blueprint.txt` is broken in two ways:
+- **Its export area started at y = 102**, so it cut off the head's top row at y = 100.5. It holds
+  191 combinators, but the build makes 195 (197 with the constant combinators).
+- **It contains the relay pole at (−220.5, 103.5) that r2-b adds for the O bus.** That tile is
+  inside the roboport at (−219, 105). `create_entity` placed it anyway, but a paste cannot. The two
+  O-bus combinators are then 9.92 tiles apart with nothing between them. Every r2-b-based
+  blueprint (r2-b, r4-*, r5, r6) has this flaw.
+
+`blueprint-v2.txt` is exported from a fresh build over x −246..−213, y 98..139. Changes:
+- the relay's two circuit wires now run through the existing pole at (−221.5, 103.5), which had
+  no circuit wires;
+- the 11 beacons (the save's planned beacon column, ghosts in the save) and the rig assembler at
+  (−217.5, 139.5) are left out.
+
+It has 495 entities, 197 combinators and 716 wires, with no circuit wire over 9.75 tiles.
+
+**Paste test, on a fresh sandbox copy:**
+1. Removed the 186 old combinators.
+2. `build_blueprint` placed the blueprint in place at (−230, 119); all 200 ghosts revived.
+3. Re-exported the result: no entity or setting differences, and the same 173 circuit networks as
+   the scripted build.
+4. Beacon benchmark: 50 delivered at 24 117 t (52% of perfect), idle at 27 401. The scripted build
+   gave 22 137 t (57%) on its own copy. Run data: `bench/results/bench_r3-grace-pasted.json`.
+
+**To paste in a game:** deconstruct the mall's old combinators first, because a paste does not
+remove them. Then paste so the cells line up. The blueprint holds the 20 cells' assemblers, chests,
+inserters, poles and roboports at their existing positions.
